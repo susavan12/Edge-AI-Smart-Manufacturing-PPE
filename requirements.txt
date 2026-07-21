@@ -1,9 +1,9 @@
 Flask
+gunicorn
 opencv-python
 ultralytics
 Pillow
 numpy
-ultralytics
 reportlab
 openpyxl
 yagmail
