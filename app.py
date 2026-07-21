@@ -145,9 +145,9 @@ MIN_SAFE_FRAMES = 2
 
 JPEG_QUALITY = 80
 
-FRAME_WIDTH = 416
+FRAME_WIDTH = 640
 
-FRAME_HEIGHT = 416
+FRAME_HEIGHT = 360
 
 # =====================================
 # ROI (Region Of Interest)
