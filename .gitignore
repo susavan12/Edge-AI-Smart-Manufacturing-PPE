@@ -10,3 +10,14 @@ __pycache__/
 
 # Virtual environment
 venv/
+
+# YOLO outputs
+runs/
+
+# Generated images
+static/results/
+static/uploads/
+static/violations/
+
+# Reports (if generated)
+reports/
