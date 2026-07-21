@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Admin Login</title>
+
+ <style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
+    background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:30px;
+
+}
+
+.login-card{
+
+    width:100%;
+    max-width:520px;
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:45px;
+
+    box-shadow:0 20px 45px rgba(0,0,0,.30);
+
+    animation:fadeIn .7s ease;
+
+}
+
+@keyframes fadeIn{
+
+from{
+
+opacity:0;
+
+transform:translateY(30px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+.icon{
+
+    font-size:70px;
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+}
+
+h1{
+
+    text-align:center;
+
+    color:#0d6efd;
+
+    margin-bottom:10px;
+
+}
+
+.subtitle{
+
+    text-align:center;
+
+    color:#666;
+
+    line-height:28px;
+
+    margin-bottom:30px;
+
+}
+
+.info{
+
+    background:#eef6ff;
+
+    border-left:5px solid #0d6efd;
+
+    border-radius:10px;
+
+    padding:18px;
+
+    margin-bottom:30px;
+
+    color:#444;
+
+    line-height:26px;
+
+}
+
+label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-size:17px;
+
+    font-weight:bold;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:15px;
+
+    margin-bottom:22px;
+
+    border:2px solid #dbeafe;
+
+    border-radius:12px;
+
+    font-size:17px;
+
+    transition:.3s;
+
+}
+
+input:focus{
+
+    outline:none;
+
+    border-color:#0d6efd;
+
+    box-shadow:0 0 15px rgba(13,110,253,.25);
+
+}
+
+button{
+
+    width:100%;
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#198754;
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+button:hover{
+
+    background:#157347;
+
+    transform:translateY(-3px);
+
+}
+
+.home-btn{
+
+    display:block;
+
+    text-align:center;
+
+    margin-top:20px;
+
+    text-decoration:none;
+
+    background:#6c757d;
+
+    color:white;
+
+    padding:15px;
+
+    border-radius:12px;
+
+    font-weight:bold;
+
+    transition:.3s;
+
+}
+
+.home-btn:hover{
+
+    transform:translateY(-3px);
+
+}
+
+.error{
+
+    background:#fdeaea;
+
+    color:#dc3545;
+
+    border-left:5px solid #dc3545;
+
+    padding:14px;
+
+    margin-bottom:20px;
+
+    border-radius:8px;
+
+}
+
+@media(max-width:600px){
+
+.login-card{
+
+padding:30px;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<body>
+
+<div class="login-card">
+
+    <div class="icon">
+        🛡
+    </div>
+
+    <h1>Administrator Login</h1>
+
+    <p class="subtitle">
+        Secure access to the Edge AI PPE Detection System.
+    </p>
+
+    <div class="info">
+        <strong>Authorized Personnel Only</strong><br>
+        Login to manage dashboard analytics, detection history,
+        reports, email alerts and system settings.
+    </div>
+
+    <!-- Error Message -->
+    {% if error %}
+    <div class="error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Login Form -->
+    <form method="POST">
+
+        <label for="username">Username</label>
+
+        <input
+            id="username"
+            type="text"
+            name="username"
+            placeholder="Enter username"
+            required>
+
+        <label for="password">Password</label>
+
+        <input
+            id="password"
+            type="password"
+            name="password"
+            placeholder="Enter password"
+            required>
+
+        <button type="submit">
+            🔐 Login
+        </button>
+
+    </form>
+
+    <a href="/" class="home-btn">
+        🏠 Back to Home
+    </a>
+
+</div>
+
+</body>
+
+</body>
+
+</html>

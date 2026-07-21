@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PPE Detection Analytics Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
+    background:#eef2f7;
+
+}
+
+.container{
+
+    width:95%;
+    max-width:1400px;
+    margin:30px auto;
+
+}
+
+h1{
+
+    text-align:center;
+    color:#0d6efd;
+    margin-bottom:35px;
+    font-size:40px;
+
+}
+
+/* ===============================
+   Statistics Cards
+================================= */
+
+.cards{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+
+}
+
+.card{
+
+    background:white;
+    border-radius:15px;
+    padding:25px;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(0,0,0,.15);
+    transition:.35s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-8px);
+
+}
+
+.card h2{
+
+    color:#555;
+    margin-bottom:15px;
+    font-size:22px;
+
+}
+
+.card p{
+
+    font-size:40px;
+    font-weight:bold;
+
+}
+
+.total{
+    color:#0d6efd;
+}
+
+.safe{
+    color:#28a745;
+}
+
+.unsafe{
+    color:#dc3545;
+}
+
+.person{
+    color:#6f42c1;
+}
+
+.helmet{
+    color:#fd7e14;
+}
+
+.vest{
+    color:#20c997;
+}
+
+/* ===============================
+   Charts
+================================= */
+
+.chart-grid{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(450px,1fr));
+    gap:25px;
+    margin-top:35px;
+
+}
+
+.chart-box{
+
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,.15);
+
+}
+
+.chart-box h2{
+
+    text-align:center;
+    margin-bottom:20px;
+    color:#0d6efd;
+
+}
+
+.chart-container{
+
+    width:100%;
+    height:350px;
+
+}
+
+/* ===============================
+   Quick Actions
+================================= */
+
+.quick-actions{
+
+    background:white;
+    margin-top:40px;
+    padding:35px;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,.18);
+
+}
+
+.quick-actions h2{
+
+    font-size:32px;
+    margin-bottom:30px;
+    color:#0d6efd;
+    text-align:center;
+
+}
+
+.action-buttons{
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:30px;
+    flex-wrap:wrap;
+
+}
+
+.action-btn{
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    min-width:300px;
+    height:65px;
+
+    padding:0 30px;
+
+    border-radius:14px;
+
+    text-decoration:none;
+
+    color:white;
+
+    font-size:21px;
+
+    font-weight:bold;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
+
+    transition:.35s;
+
+}
+
+.action-btn:hover{
+
+    transform:translateY(-6px) scale(1.03);
+
+}
+
+.pdf{
+
+    background:linear-gradient(135deg,#198754,#20c997);
+
+}
+
+.admin{
+
+    background:linear-gradient(135deg,#6f42c1,#8b5cf6);
+
+}
+
+/* ===============================
+   Back Button
+================================= */
+
+.back{
+
+    display:block;
+    width:260px;
+    margin:40px auto;
+    text-align:center;
+    text-decoration:none;
+    color:white;
+    background:#0d6efd;
+    padding:15px;
+    border-radius:10px;
+    font-size:18px;
+    transition:.3s;
+
+}
+
+.back:hover{
+
+    background:#0b5ed7;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================= Header ================= -->
+
+    <div class="header">
+
+        <div>
+
+            <h1>📊 Analytics Dashboard</h1>
+
+            <p>Edge AI for Smart Manufacturing & Construction Sites</p>
+
+        </div>
+
+        <div class="date">
+
+            <h3 id="liveDate"></h3>
+
+            <small>Real-Time Monitoring</small>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= Statistics ================= -->
+
+    <div class="cards">
+
+        <div class="card">
+
+            <div class="icon">📄</div>
+
+            <h2 id="total">{{ data.total }}</h2>
+
+            <p>Total Detections</p>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon">✅</div>
+
+            <h2 id="safe" class="safe">{{ data.safe }}</h2>
+
+            <p>SAFE</p>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon">🚨</div>
+
+            <h2 id="unsafe" class="unsafe">{{ data.unsafe }}</h2>
+
+            <p>UNSAFE</p>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon">👷</div>
+
+            <h2 id="persons">{{ data.persons }}</h2>
+
+            <p>Total Workers</p>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon">⛑</div>
+
+            <h2 id="helmet">{{ data.helmet }}</h2>
+
+            <p>No Hardhat</p>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon">🦺</div>
+
+            <h2 id="vest">{{ data.vest }}</h2>
+
+            <p>No Safety Vest</p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= Charts ================= -->
+
+    <div class="chart-grid">
+
+        <div class="chart-box">
+
+            <h2>🥧 SAFE vs UNSAFE</h2>
+
+            <div class="chart-container">
+
+                <canvas id="pieChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="chart-box">
+
+            <h2>📊 PPE Violations</h2>
+
+            <div class="chart-container">
+
+                <canvas id="barChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="chart-box">
+
+            <h2>🛡 Violation Distribution</h2>
+
+            <div class="chart-container">
+
+                <canvas id="doughnutChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="chart-box">
+
+            <h2>📈 Detection Trend</h2>
+
+            <div class="chart-container">
+
+                <canvas id="lineChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= Quick Actions ================= -->
+
+    <div class="quick-actions">
+
+    <h2>⚡ Quick Actions</h2>
+
+    <div class="action-buttons">
+
+        <a href="/download_report" class="action-btn pdf">
+            📄 Download PDF Report
+        </a>
+
+        <a href="/admin" class="action-btn admin">
+            ⚙ Admin Panel
+        </a>
+
+    </div>
+
+</div>
+
+</div>
+
+<script>
+
+function updateClock(){
+
+    const now = new Date();
+
+    document.getElementById("liveDate").innerHTML =
+        now.toLocaleString();
+
+}
+
+setInterval(updateClock,1000);
+
+updateClock();
+
+</script>
+
+
+<!-- ================= Existing Dashboard Script ================= -->
+
+<script>
+
+let pieChart;
+let barChart;
+let doughnutChart;
+let lineChart;
+
+// =====================================
+// Create Charts
+// =====================================
+
+function createCharts(chartData){
+
+    pieChart = new Chart(document.getElementById("pieChart"),{
+
+        type:"pie",
+
+        data:{
+
+            labels:["SAFE","UNSAFE"],
+
+            datasets:[{
+
+                data:[
+                    chartData.safe,
+                    chartData.unsafe
+                ],
+
+                backgroundColor:[
+                    "#28a745",
+                    "#dc3545"
+                ]
+
+            }]
+
+        },
+
+        options:{
+            responsive:true
+        }
+
+    });
+
+    barChart = new Chart(document.getElementById("barChart"),{
+
+        type:"bar",
+
+        data:{
+
+            labels:[
+                "No Hardhat",
+                "No Safety Vest"
+            ],
+
+            datasets:[{
+
+                label:"Violations",
+
+                data:[
+                    chartData.helmet,
+                    chartData.vest
+                ],
+
+                backgroundColor:[
+                    "#fd7e14",
+                    "#20c997"
+                ]
+
+            }]
+
+        },
+
+        options:{
+            responsive:true,
+            scales:{
+                y:{
+                    beginAtZero:true
+                }
+            }
+        }
+
+    });
+
+    doughnutChart = new Chart(document.getElementById("doughnutChart"),{
+
+        type:"doughnut",
+
+        data:{
+
+            labels:[
+                "No Hardhat",
+                "No Safety Vest"
+            ],
+
+            datasets:[{
+
+                data:[
+                    chartData.helmet,
+                    chartData.vest
+                ],
+
+                backgroundColor:[
+                    "#ff9800",
+                    "#009688"
+                ]
+
+            }]
+
+        },
+
+        options:{
+            responsive:true
+        }
+
+    });
+
+    lineChart = new Chart(document.getElementById("lineChart"),{
+
+        type:"line",
+
+        data:{
+
+            labels:[
+                "Total",
+                "Persons",
+                "SAFE",
+                "UNSAFE"
+            ],
+
+            datasets:[{
+
+                label:"Statistics",
+
+                data:[
+                    chartData.total,
+                    chartData.persons,
+                    chartData.safe,
+                    chartData.unsafe
+                ],
+
+                borderColor:"#0d6efd",
+
+                backgroundColor:"#0d6efd",
+
+                fill:false,
+
+                tension:0.3
+
+            }]
+
+        },
+
+        options:{
+            responsive:true,
+            scales:{
+                y:{
+                    beginAtZero:true
+                }
+            }
+        }
+
+    });
+
+}
+
+function updateCards(data){
+
+    document.getElementById("total").innerHTML=data.total;
+    document.getElementById("safe").innerHTML=data.safe;
+    document.getElementById("unsafe").innerHTML=data.unsafe;
+    document.getElementById("persons").innerHTML=data.persons;
+    document.getElementById("helmet").innerHTML=data.helmet;
+    document.getElementById("vest").innerHTML=data.vest;
+
+}
+
+function updateCharts(chart){
+
+    pieChart.data.datasets[0].data=[chart.safe,chart.unsafe];
+    pieChart.update();
+
+    barChart.data.datasets[0].data=[chart.helmet,chart.vest];
+    barChart.update();
+
+    doughnutChart.data.datasets[0].data=[chart.helmet,chart.vest];
+    doughnutChart.update();
+
+    lineChart.data.datasets[0].data=[
+        chart.total,
+        chart.persons,
+        chart.safe,
+        chart.unsafe
+    ];
+
+    lineChart.update();
+
+}
+
+async function refreshDashboard(){
+
+    try{
+
+        const dashboardResponse=await fetch("/dashboard_data");
+        const dashboard=await dashboardResponse.json();
+
+        updateCards(dashboard);
+
+        const chartResponse=await fetch("/chart_data");
+        const chart=await chartResponse.json();
+
+        updateCharts(chart);
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+    }
+
+}
+
+window.onload=async function(){
+
+    const response=await fetch("/chart_data");
+
+    const chart=await response.json();
+
+    createCharts(chart);
+
+    await refreshDashboard();
+
+    setInterval(refreshDashboard,3000);
+
+}
+
+</script>
+
+</body>
+
+</html>

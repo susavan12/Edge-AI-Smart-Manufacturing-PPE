@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<video id="video" autoplay></video>
+
+<script>
+
+navigator.mediaDevices.getUserMedia({
+    video:true
+})
+.then(stream=>{
+    document.getElementById("video").srcObject = stream;
+})
+.catch(error=>{
+    alert(error);
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+Flask
+opencv-python
+ultralytics
+Pillow
+numpy
+ultralytics
+reportlab
+openpyxl
+yagmail
+mediapipe
+python-dotenv

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Email Settings</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
+    background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:30px;
+
+}
+
+.container{
+
+    width:100%;
+
+    max-width:650px;
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:45px;
+
+    box-shadow:0 20px 40px rgba(0,0,0,.25);
+
+    animation:fadeIn .7s ease;
+
+}
+
+@keyframes fadeIn{
+
+from{
+
+opacity:0;
+
+transform:translateY(30px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+.icon{
+
+    font-size:70px;
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+}
+
+h1{
+
+    text-align:center;
+
+    color:#0d6efd;
+
+    margin-bottom:10px;
+
+}
+
+.subtitle{
+
+    text-align:center;
+
+    color:#666;
+
+    margin-bottom:35px;
+
+    line-height:28px;
+
+}
+
+label{
+
+    display:block;
+
+    margin-bottom:10px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:#333;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:16px;
+
+    font-size:17px;
+
+    border:2px solid #dbeafe;
+
+    border-radius:12px;
+
+    transition:.3s;
+
+    margin-bottom:25px;
+
+}
+
+input:focus{
+
+    outline:none;
+
+    border-color:#0d6efd;
+
+    box-shadow:0 0 15px rgba(13,110,253,.25);
+
+}
+
+button{
+
+    width:100%;
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#198754;
+
+    color:white;
+
+    font-size:19px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+button:hover{
+
+    transform:translateY(-3px);
+
+    background:#157347;
+
+}
+
+.buttons{
+
+    display:flex;
+
+    gap:15px;
+
+    margin-top:20px;
+
+}
+
+.btn{
+
+    flex:1;
+
+    text-align:center;
+
+    text-decoration:none;
+
+    padding:15px;
+
+    border-radius:12px;
+
+    color:white;
+
+    font-weight:bold;
+
+    transition:.3s;
+
+}
+
+.back{
+
+    background:#6c757d;
+
+}
+
+.admin{
+
+    background:#0d6efd;
+
+}
+
+.btn:hover{
+
+    transform:translateY(-3px);
+
+}
+
+.info{
+
+    background:#eef6ff;
+
+    border-left:5px solid #0d6efd;
+
+    padding:18px;
+
+    border-radius:10px;
+
+    margin-bottom:25px;
+
+    color:#444;
+
+    line-height:26px;
+
+}
+
+@media(max-width:600px){
+
+.container{
+
+padding:30px;
+
+}
+
+.buttons{
+
+flex-direction:column;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="icon">
+
+📧
+
+</div>
+
+<h1>
+
+Email Alert Settings
+
+</h1>
+
+<p class="subtitle">
+
+Configure the email address that will receive automatic PPE violation alerts from the Edge AI system.
+
+</p>
+
+<div class="info">
+
+<strong>Current Function:</strong><br>
+
+Whenever an <strong>UNSAFE</strong> worker is detected, the system automatically sends an email notification to the address configured below.
+
+</div>
+
+<form method="POST">
+
+<label>
+
+Alert Email Address
+
+</label>
+
+<input
+
+type="email"
+
+name="email"
+
+value="{{ email }}"
+
+placeholder="example@gmail.com"
+
+required>
+
+<button type="submit">
+
+💾 Save Email Settings
+
+</button>
+
+</form>
+
+<div class="buttons">
+
+<a href="/settings" class="btn back">
+
+⬅ Settings
+
+</a>
+
+<a href="/admin" class="btn admin">
+
+🛡 Admin Panel
+
+</a>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>PPE Detection Result</title>
+
+  <style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
+    background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+
+    min-height:100vh;
+
+    padding:40px;
+
+}
+
+/* ===========================
+   Main Container
+=========================== */
+
+.container{
+
+    max-width:1400px;
+
+    margin:auto;
+
+}
+
+/* ===========================
+   Header
+=========================== */
+
+.header{
+
+    text-align:center;
+
+    color:white;
+
+    margin-bottom:45px;
+
+}
+
+.header h1{
+
+    font-size:48px;
+
+    margin-bottom:15px;
+
+}
+
+.header p{
+
+    font-size:20px;
+
+    color:#dbeafe;
+
+}
+
+/* ===========================
+   Image Cards
+=========================== */
+
+.image-section{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(450px,1fr));
+
+    gap:30px;
+
+    margin-bottom:45px;
+
+}
+
+.image-card{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0 15px 30px rgba(0,0,0,.25);
+
+    transition:.35s;
+
+}
+
+.image-card:hover{
+
+    transform:translateY(-8px);
+
+}
+
+.image-card h2{
+
+    text-align:center;
+
+    color:#0d6efd;
+
+    margin-bottom:20px;
+
+}
+
+.image-card img{
+
+    width:100%;
+
+    border-radius:15px;
+
+    transition:.4s;
+
+}
+
+.image-card img:hover{
+
+    transform:scale(1.02);
+
+}
+
+/* ===========================
+   Summary Cards
+=========================== */
+
+.summary{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+
+    gap:20px;
+
+    margin-bottom:45px;
+
+}
+
+.stat-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    text-align:center;
+
+    box-shadow:0 12px 25px rgba(0,0,0,.2);
+
+    transition:.3s;
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-6px);
+
+}
+
+.stat-card h3{
+
+    color:#0d6efd;
+
+    margin-bottom:12px;
+
+}
+
+.stat-card p{
+
+    font-size:34px;
+
+    font-weight:bold;
+
+}
+
+/* ===========================
+   Status Card
+=========================== */
+
+.status-box{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:35px;
+
+    text-align:center;
+
+    margin-bottom:40px;
+
+    box-shadow:0 15px 30px rgba(0,0,0,.25);
+
+}
+
+.safe{
+
+    color:#198754;
+
+    font-size:42px;
+
+    font-weight:bold;
+
+}
+
+.unsafe{
+
+    color:#dc3545;
+
+    font-size:42px;
+
+    font-weight:bold;
+
+}
+
+/* ===========================
+   Buttons
+=========================== */
+
+.buttons{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:25px;
+
+    margin-top:20px;
+
+}
+
+.btn{
+
+    display:inline-block;
+
+    padding:15px 28px;
+
+    border-radius:10px;
+
+    text-decoration:none;
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    transition:.35s;
+
+}
+
+.btn:hover{
+
+    transform:translateY(-4px);
+
+}
+
+.home{
+
+    background:#0d6efd;
+
+}
+
+.detect{
+
+    background:#198754;
+
+}
+
+.camera{
+
+    background:#fd7e14;
+
+}
+
+.dashboard{
+
+    background:#6f42c1;
+
+}
+
+/* ===========================
+   AI Inspection Summary
+=========================== */
+
+.summary-box{
+
+    background:white;
+
+    margin-top:40px;
+
+    margin-bottom:40px;
+
+    border-radius:20px;
+
+    padding:35px;
+
+    box-shadow:0 15px 30px rgba(0,0,0,.22);
+
+}
+
+.summary-box h2{
+
+    color:#0d6efd;
+
+    margin-bottom:20px;
+
+    text-align:center;
+
+}
+
+.summary-box ul{
+
+    list-style:none;
+
+    padding-left:0;
+
+}
+
+.summary-box li{
+
+    font-size:19px;
+
+    margin:15px 0;
+
+    color:#444;
+
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media(max-width:768px){
+
+.header h1{
+
+font-size:36px;
+
+}
+
+.header p{
+
+font-size:18px;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===========================
+         Header
+    ============================ -->
+
+    <div class="header">
+
+        <h1>🛡 Edge AI PPE Detection Report</h1>
+
+        <p>
+            AI Powered Personal Protective Equipment Inspection using YOLOv8
+        </p>
+
+    </div>
+
+    <!-- ===========================
+         Image Comparison
+    ============================ -->
+
+    <div class="image-section">
+
+        <div class="image-card">
+
+            <h2>📷 Original Image</h2>
+
+            <img src="{{ original_image }}">
+
+        </div>
+
+        <div class="image-card">
+
+            <h2>🤖 AI Detection Result</h2>
+
+            <img src="{{ detected_image }}">
+
+        </div>
+
+    </div>
+
+    <!-- ===========================
+         Summary Cards
+    ============================ -->
+
+    <div class="summary">
+
+        <div class="stat-card">
+
+            <h3>👷 Persons</h3>
+
+            <p>{{ person }}</p>
+
+        </div>
+
+        <div class="stat-card">
+
+            <h3>🪖 Hardhat</h3>
+
+            <p>{{ hardhat }}</p>
+
+        </div>
+
+        <div class="stat-card">
+
+            <h3>❌ No Hardhat</h3>
+
+            <p>{{ no_hardhat }}</p>
+
+        </div>
+
+        <div class="stat-card">
+
+            <h3>🦺 Safety Vest</h3>
+
+            <p>{{ vest }}</p>
+
+        </div>
+
+        <div class="stat-card">
+
+            <h3>❌ No Vest</h3>
+
+            <p>{{ no_vest }}</p>
+
+        </div>
+
+    </div>
+
+    <!-- ===========================
+         Status
+    ============================ -->
+
+    <div class="status-box">
+
+        <h2 style="margin-bottom:20px;color:#0d6efd;">
+
+            Worker Safety Status
+
+        </h2>
+
+        {% if status=="SAFE" %}
+
+        <div class="safe">
+
+            🟢 SAFE
+
+        </div>
+
+        {% elif status=="UNSAFE" %}
+
+        <div class="unsafe">
+
+            🔴 UNSAFE
+
+        </div>
+
+        {% else %}
+
+        <div style="font-size:36px;color:#fd7e14;font-weight:bold;">
+
+            ⚠ {{ status }}
+
+        </div>
+
+        {% endif %}
+
+    </div>
+    
+    <!-- ===========================
+     AI Inspection Summary
+=========================== -->
+
+<div class="summary-box">
+
+<h2>
+
+🤖 AI Inspection Summary
+
+</h2>
+
+<ul>
+
+{% if person > 0 %}
+
+<li>
+
+✅ Person detected.
+
+</li>
+
+{% else %}
+
+<li>
+
+⚠ No person detected.
+
+</li>
+
+{% endif %}
+
+{% if hardhat > 0 %}
+
+<li>
+
+✅ Hardhat detected.
+
+</li>
+
+{% endif %}
+
+{% if no_hardhat > 0 %}
+
+<li>
+
+❌ Hardhat missing.
+
+</li>
+
+{% endif %}
+
+{% if vest > 0 %}
+
+<li>
+
+✅ Safety Vest detected.
+
+</li>
+
+{% endif %}
+
+{% if no_vest > 0 %}
+
+<li>
+
+❌ Safety Vest missing.
+
+</li>
+
+{% endif %}
+
+{% if status=="SAFE" %}
+
+<li>
+
+🟢 Worker follows PPE safety requirements.
+
+</li>
+
+{% elif status=="UNSAFE" %}
+
+<li>
+
+🚨 Immediate corrective action recommended.
+
+</li>
+
+{% endif %}
+
+</ul>
+
+</div>
+
+    <!-- ===========================
+         Buttons
+    ============================ -->
+
+    <div class="buttons">
+
+        <a href="/" class="btn home">
+
+            🏠 Home
+
+        </a>
+
+        <a href="/" class="btn detect">
+
+          📷 Upload Another Image
+
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

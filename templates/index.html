@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Edge AI PPE Detection System</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial,Helvetica,sans-serif;
+        }
+
+        /* ============================= */
+        /* Navigation */
+        /* ============================= */
+
+        .navbar{
+
+            position:sticky;
+
+            top:0;
+
+            width:100%;
+
+            z-index:999;
+
+            display:flex;
+
+            justify-content:space-between;
+
+            align-items:center;
+
+            padding:18px 60px;
+
+            background:rgba(15,23,42,.95);
+
+            backdrop-filter:blur(10px);
+
+            box-shadow:0 3px 15px rgba(0,0,0,.2);
+
+        }
+
+        .logo{
+
+            color:white;
+
+            font-size:28px;
+
+            font-weight:bold;
+
+        }
+
+        .nav-links{
+
+            display:flex;
+
+            gap:30px;
+
+        }
+
+        .nav-links a{
+
+            color:white;
+
+            text-decoration:none;
+
+            font-size:18px;
+
+            font-weight:bold;
+
+            transition:.3s;
+
+        }
+
+        .nav-links a:hover{
+
+            color:#38bdf8;
+
+        }
+
+        /* ============================= */
+        /* Body */
+        /* ============================= */
+
+        body{
+
+            background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+
+            min-height:100vh;
+
+        }
+
+        /* ============================= */
+        /* Main Container */
+        /* ============================= */
+
+        .container{
+
+         width:90%;
+
+         max-width:1200px;
+
+         margin:40px auto;
+
+         padding:20px;
+
+        }
+
+        /* ============================= */
+        /* Hero */
+        /* ============================= */
+
+        .hero{
+
+            display:flex;
+
+            justify-content:space-between;
+
+            align-items:center;
+
+            flex-wrap:wrap;
+
+            gap:40px;
+
+        }
+
+        .hero-left{
+
+            flex:1;
+
+            min-width:350px;
+
+        }
+
+        .hero-left h1{
+
+            color:white;
+
+            font-size:48px;
+
+            margin-bottom:20px;
+
+        }
+
+        .hero-left h2{
+
+            color:#dbeafe;
+
+            font-size:24px;
+
+            margin-bottom:20px;
+
+        }
+
+        .hero-left p{
+
+            color:#f8fafc;
+
+            line-height:30px;
+
+            font-size:18px;
+
+        }
+
+        .hero-right{
+
+            flex:1;
+
+            text-align:center;
+
+        }
+
+        .hero-right img{
+
+            width:100%;
+
+            max-width:500px;
+
+            border-radius:20px;
+
+            box-shadow:0 20px 50px rgba(0,0,0,.35);
+
+        }
+
+        /* ============================= */
+        /* Upload */
+        /* ============================= */
+
+        .upload-box{
+
+            margin-top:50px;
+
+            background:white;
+
+            border-radius:20px;
+
+            padding:35px;
+
+            text-align:center;
+
+            box-shadow:0 20px 40px rgba(0,0,0,.25);
+
+        }
+
+        .upload-box h2{
+
+            margin-bottom:25px;
+
+            color:#0d6efd;
+
+        }
+
+        input[type=file]{
+
+            width:100%;
+
+            padding:15px;
+
+            margin-bottom:25px;
+
+            border:2px dashed #0d6efd;
+
+            border-radius:10px;
+
+            background:#f8f9fa;
+
+        }
+
+        /* ============================= */
+        /* Buttons */
+        /* ============================= */
+
+        .btn{
+
+            display:block;
+
+            width:320px;
+
+            margin:15px auto;
+
+            padding:16px;
+
+            border-radius:12px;
+
+            text-decoration:none;
+
+            font-size:18px;
+
+            font-weight:bold;
+
+            color:white;
+
+            transition:.35s;
+
+            border:none;
+
+            cursor:pointer;
+
+        }
+
+        .btn:hover{
+
+            transform:translateY(-5px);
+
+            box-shadow:0 12px 22px rgba(0,0,0,.25);
+
+        }
+
+        .detect{
+
+            background:#0d6efd;
+
+        }
+
+        .camera{
+
+            background:#198754;
+
+        }
+
+        .admin{
+
+            background:#fd7e14;
+
+        }
+
+        /* ============================= */
+        /* Features */
+        /* ============================= */
+
+        .features{
+
+            margin-top:70px;
+
+            display:grid;
+
+            grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+
+            gap:25px;
+
+        }
+
+        .card{
+
+            background:white;
+
+            padding:30px;
+
+            border-radius:18px;
+
+            text-align:center;
+
+            transition:.35s;
+
+            box-shadow:0 12px 25px rgba(0,0,0,.18);
+
+        }
+
+        .card:hover{
+
+            transform:translateY(-10px);
+
+        }
+
+        .card img{
+
+            width:70px;
+
+            margin-bottom:20px;
+
+        }
+
+        .card h3{
+
+            color:#0d6efd;
+
+            margin-bottom:15px;
+
+        }
+
+        .card p{
+
+            color:#555;
+
+            line-height:25px;
+
+        }
+
+        /* ============================= */
+        /* Statistics */
+        /* ============================= */
+
+        .stats{
+
+            display:grid;
+
+            grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+            gap:25px;
+
+            margin-top:60px;
+
+        }
+
+        .stat-card{
+
+            background:white;
+
+            border-radius:18px;
+
+            padding:30px;
+
+            text-align:center;
+
+            box-shadow:0 15px 30px rgba(0,0,0,.18);
+
+            transition:.35s;
+
+        }
+
+        .stat-card:hover{
+
+            transform:translateY(-10px);
+
+        }
+
+        .stat-card h2{
+
+            font-size:42px;
+
+            color:#0d6efd;
+
+            margin-bottom:10px;
+
+        }
+
+        .stat-card p{
+
+            color:#555;
+
+            font-size:18px;
+
+        }
+
+        /* ============================= */
+        /* About */
+        /* ============================= */
+
+        .about{
+
+            background:white;
+
+            margin-top:70px;
+
+            padding:40px;
+
+            border-radius:20px;
+
+            box-shadow:0 15px 30px rgba(0,0,0,.18);
+
+        }
+
+        .about h2{
+
+            color:#0d6efd;
+
+            text-align:center;
+
+            margin-bottom:25px;
+
+        }
+
+        .about p{
+
+            color:#555;
+
+            font-size:18px;
+
+            line-height:32px;
+
+            text-align:justify;
+
+        }
+
+        .workflow{
+
+            background:white;
+
+            margin-top:40px;
+
+            padding:40px;
+
+            border-radius:20px;
+
+            box-shadow:0 15px 30px rgba(0,0,0,.18);
+
+        }
+
+        .workflow h2{
+
+            color:#0d6efd;
+
+            text-align:center;
+
+            margin-bottom:20px;
+
+        }
+
+        .workflow p{
+
+            text-align:center;
+
+            font-size:20px;
+
+            color:#444;
+
+            font-weight:bold;
+
+        }
+
+        /* ============================= */
+        /* Footer */
+        /* ============================= */
+
+        footer{
+
+            margin-top:70px;
+
+            text-align:center;
+
+            color:white;
+
+            padding:30px;
+
+            border-top:1px solid rgba(255,255,255,.2);
+
+        }
+
+        /* ============================= */
+        /* Mobile Responsive */
+        /* ============================= */
+
+        @media(max-width:900px){
+
+            .navbar{
+
+                flex-direction:column;
+
+                gap:15px;
+
+                padding:20px;
+
+            }
+
+            .nav-links{
+
+                flex-wrap:wrap;
+
+                justify-content:center;
+
+            }
+
+            .hero{
+
+                flex-direction:column;
+
+                text-align:center;
+
+            }
+
+            .hero-left{
+
+                min-width:100%;
+
+            }
+
+            .hero-left h1{
+
+                font-size:36px;
+
+            }
+
+            .hero-left h2{
+
+                font-size:22px;
+
+            }
+
+            .hero-right{
+
+                margin-top:20px;
+
+            }
+
+            .hero-right img{
+
+                width:100%;
+
+                max-width:400px;
+
+            }
+
+            .upload-box{
+
+                padding:25px;
+
+            }
+
+            .btn{
+
+                width:100%;
+
+            }
+
+            .features{
+
+                grid-template-columns:1fr;
+
+            }
+
+            .stats{
+
+                grid-template-columns:1fr;
+
+            }
+
+            .about{
+
+                padding:25px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- ============================= -->
+    <!-- Navigation Bar -->
+    <!-- ============================= -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+
+            🦺 Edge AI Safety
+
+        </div>
+
+        <div class="nav-links">
+
+            <a href="/">Home</a>
+
+            <a href="#about">About</a>
+
+            <a href="#features">Features</a>
+
+            <a href="#workflow">Workflow</a>
+
+
+        </div>
+
+    </nav>
+
+    <div class="container">
+
+        <!-- ================= HERO SECTION ================= -->
+
+        <div class="hero">
+
+            <div class="hero-left">
+
+                <h1>
+
+                    🦺 Edge AI for Smart Manufacturing
+
+                </h1>
+
+                <h2>
+
+                    Real-Time PPE Detection & Worker Safety Monitoring
+
+                </h2>
+
+                <p>
+
+                    AI-powered safety monitoring system for construction sites
+                    and manufacturing industries using
+                    <b>YOLOv8</b>,
+                    <b>Computer Vision</b>,
+                    <b>Flask</b>,
+                    and
+                    <b>Edge AI</b>.
+
+                </p>
+
+            </div>
+
+            <div class="hero-right">
+
+                <img
+                src="{{ url_for('static', filename='assets/images/hero-banner.png') }}"
+                alt="Hero Banner">
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= Upload Box ================= -->
+
+        <div class="upload-box">
+
+            <h2>
+
+                Upload Image for PPE Detection
+
+            </h2>
+
+            <form
+            action="/predict"
+            method="POST"
+            enctype="multipart/form-data">
+
+                <input
+                type="file"
+                name="image"
+                accept="image/*"
+                required>
+
+                <button
+                class="btn detect"
+                type="submit">
+
+                    🔍 Detect PPE
+
+                </button>
+
+            </form>
+
+            <a
+            href="/camera"
+            class="btn camera">
+
+                🎥 Live Camera
+
+            </a>
+
+            <a
+            href="/login"
+            class="btn admin">
+
+                🔐 Admin Login
+
+            </a>
+
+        </div>
+
+
+        <!-- ================= Feature Cards ================= -->
+
+        <div class="features" id="features">
+
+            <div class="card">
+
+                <img
+                src="{{ url_for('static', filename='assets/images/ppe-icon.png') }}">
+
+                <h3>
+
+                    PPE Detection
+
+                </h3>
+
+                <p>
+
+                    Detect helmets,
+                    safety vests,
+                    masks,
+                    workers
+                    and PPE violations.
+
+                </p>
+
+            </div>
+
+            <div class="card">
+
+                <img
+                src="{{ url_for('static', filename='assets/images/dashboard-icon.png') }}">
+
+                <h3>
+
+                    Analytics Dashboard
+
+                </h3>
+
+                <p>
+
+                    View detection history,
+                    statistics,
+                    charts
+                    and downloadable reports.
+
+                </p>
+
+            </div>
+
+            <div class="card">
+
+                <img
+                src="{{ url_for('static', filename='assets/images/email-icon.png') }}">
+
+                <h3>
+
+                    Email Alerts
+
+                </h3>
+
+                <p>
+
+                    Receive automatic
+                    email notifications
+                    whenever an unsafe
+                    PPE violation is detected.
+
+                </p>
+
+            </div>
+
+            <div class="card">
+
+                <img
+                src="{{ url_for('static', filename='assets/images/camera-icon.png') }}">
+
+                <h3>
+
+                    Live Monitoring
+
+                </h3>
+
+                <p>
+
+                    Real-time camera
+                    monitoring with
+                    instant alerts
+                    and Edge AI inference.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <!-- ================= Statistics ================= -->
+
+        <!-- ================= Statistics ================= -->
+
+        <div class="stats">
+
+            <div class="stat-card">
+
+                <h2 id="count1">0</h2>
+
+                <p>Object Classes</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <h2 id="count2">0</h2>
+
+                <p>Edge AI Detection</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <h2 id="count3">0</h2>
+
+                <p>Safety Monitoring</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <h2 id="count4">0</h2>
+
+                <p>Email Alerts</p>
+
+            </div>
+
+        </div>
+
+        <!-- ================= About ================= -->
+
+        <div class="about" id="about">
+
+            <h2>
+
+                About This Project
+
+            </h2>
+
+            <p>
+
+                The Edge AI PPE Detection System is an intelligent worker safety
+                monitoring platform designed for manufacturing industries and
+                construction sites.
+
+                Using Computer Vision and the YOLO object detection model,
+                the system automatically identifies workers, safety helmets,
+                safety vests, masks, and PPE violations in real time.
+
+                The application provides live camera monitoring,
+                image-based detection,
+                an analytics dashboard,
+                email alerts,
+                PDF and Excel report generation,
+                and a secure admin panel.
+
+                It helps improve workplace safety,
+                reduce accidents,
+                and support compliance with industrial safety standards.
+
+            </p>
+
+        </div>
+
+        <!-- ============================= -->
+        <!-- Workflow Section -->
+        <!-- ============================= -->
+
+        <div class="workflow" id="workflow">
+
+            <h2>
+
+                AI Workflow
+
+            </h2>
+
+            <p>
+
+                Camera → Edge AI → PPE Detection → Safety Analysis → Dashboard → Email Alert → PDF Report
+
+            </p>
+
+        </div>
+
+        <!-- ================= Footer ================= -->
+
+        <footer>
+
+            © 2026 Edge AI PPE Detection System
+
+        </footer>
+    </div>
+
+    <script>
+
+        let counterStarted = false;
+
+        function animateCounter(id, endValue, suffix = "") {
+
+            let current = 0;
+
+            const element = document.getElementById(id);
+
+            const step = Math.ceil(endValue / 80);
+
+            const timer = setInterval(function () {
+
+                current += step;
+
+                if (current >= endValue) {
+
+                    current = endValue;
+
+                    clearInterval(timer);
+
+                }
+
+                element.innerHTML = current + suffix;
+
+            }, 20);
+
+        }
+
+        function startCounters() {
+
+            if (counterStarted) return;
+
+            counterStarted = true;
+
+            animateCounter("count1", 25, "+");
+
+            animateCounter("count2", 100, "%");
+
+            animateCounter("count3", 24, "×7");
+
+            animateCounter("count4", 100, "%");
+
+        }
+
+        const observer = new IntersectionObserver(function(entries){
+
+            entries.forEach(function(entry){
+
+                if(entry.isIntersecting){
+
+                    startCounters();
+
+                }
+
+            });
+
+        },{
+            threshold:0.4
+        });
+
+        observer.observe(document.querySelector(".stats"));
+
+    </script>
+
+</body>
+
+</html>
