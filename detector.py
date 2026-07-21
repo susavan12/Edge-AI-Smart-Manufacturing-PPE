@@ -18,16 +18,16 @@ class PPEDetector:
             source=image,
 
             # Lower confidence for stable webcam detection
-            conf=0.30,
+            conf=0.25,
 
             # NMS threshold
             iou=0.45,
 
             # High resolution
-            imgsz=416,
+            imgsz=640,
 
             # Allow more detections
-            max_det=10,
+            max_det=20,
 
             augment=False,
 
