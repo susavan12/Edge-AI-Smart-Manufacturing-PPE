@@ -9,3 +9,4 @@ openpyxl==3.1.5
 yagmail==0.15.293
 mediapipe==0.10.35
 python-dotenv==1.1.1
+pyttsx3

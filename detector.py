@@ -5,7 +5,7 @@ class PPEDetector:
 
     def __init__(self):
         # Load trained model
-        self.model = YOLO("best.pt")
+        self.model = YOLO("best_v2.pt")
         self.model.to("cpu")
 
         print(self.model.names)
@@ -17,26 +17,21 @@ class PPEDetector:
 
             source=image,
 
-            # Lower confidence for stable webcam detection
             conf=0.25,
 
-            # NMS threshold
             iou=0.45,
 
-            # High resolution
             imgsz=640,
 
-            # Allow more detections
             max_det=20,
 
             augment=False,
 
-            verbose=False,
+            verbose=True,
 
             save=False,
 
-            stream=False,
-        
+            stream=False
 
         )
 

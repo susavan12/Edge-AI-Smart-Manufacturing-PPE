@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Management</title>
+
+<style>
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:40px;
+}
+
+.container{
+
+    max-width:900px;
+
+    margin:auto;
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:15px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+
+}
+
+h1{
+
+    text-align:center;
+
+    color:#0d6efd;
+
+    margin-bottom:30px;
+
+}
+
+label{
+
+    display:block;
+
+    margin-top:15px;
+
+    font-weight:bold;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:12px;
+
+    margin-top:5px;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+}
+
+button{
+
+    margin-top:25px;
+
+    width:100%;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#0d6efd;
+
+    color:white;
+
+    font-size:17px;
+
+    cursor:pointer;
+
+}
+
+button:hover{
+
+    background:#0b5ed7;
+
+}
+
+.back{
+
+    display:block;
+
+    margin-top:20px;
+
+    text-align:center;
+
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin-top:20px;
+
+}
+
+table th{
+
+    background:#0d6efd;
+
+    color:white;
+
+    padding:12px;
+
+}
+
+table td{
+
+    padding:12px;
+
+    border-bottom:1px solid #ddd;
+
+    text-align:center;
+
+}
+
+table tr:hover{
+
+    background:#f8f9fa;
+
+}
+
+.employee-photo{
+
+    width:70px;
+
+    height:70px;
+
+    border-radius:8px;
+
+    object-fit:cover;
+
+    border:2px solid #ddd;
+
+}
+
+.delete-btn{
+
+    color:red;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+}
+
+.delete-btn:hover{
+
+    text-decoration:underline;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>👷 Employee Management</h1>
+
+<form
+action="{{ url_for('add_employee') }}"
+method="POST"
+enctype="multipart/form-data">
+
+<label>Employee ID</label>
+
+<input
+type="text"
+name="employee_id"
+required>
+
+<label>Employee Name</label>
+
+<input
+type="text"
+name="employee_name"
+required>
+
+<label>Department</label>
+
+<input
+type="text"
+name="department"
+required>
+
+<label>Face Image</label>
+
+<input
+type="file"
+name="employee_image"
+accept="image/*"
+required>
+
+<button type="submit">
+
+Save Employee
+
+</button>
+
+</form>
+
+<a class="back"
+href="{{ url_for('admin') }}">
+
+⬅ Back to Admin Panel
+
+</a>
+
+<!-- ========================================= -->
+<!-- Registered Employees -->
+<!-- ========================================= -->
+
+<hr style="margin:40px 0;">
+
+<h2 style="text-align:center;color:#0d6efd;">
+
+Registered Employees
+
+</h2>
+
+<table>
+
+<tr>
+
+<th>Photo</th>
+
+<th>Employee ID</th>
+
+<th>Name</th>
+
+<th>Department</th>
+
+<th>Action</th>
+
+</tr>
+
+{% for employee in employees %}
+
+<tr>
+
+    <td>
+
+        <img
+        src="{{ url_for('employee_face', filename=employee[4]) }}"
+        class="employee-photo">
+
+    </td>
+
+    <td>{{ employee[1] }}</td>
+
+    <td>{{ employee[2] }}</td>
+
+    <td>{{ employee[3] }}</td>
+
+    <td>
+
+        <a
+        href="/delete_employee/{{ employee[0] }}"
+        class="delete-btn"
+        onclick="return confirm('Delete this employee?');">
+
+        🗑 Delete
+
+        </a>
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+</body>
+
+</html>

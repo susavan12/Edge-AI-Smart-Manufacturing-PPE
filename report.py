@@ -8,8 +8,9 @@ from reportlab.platypus import (
 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
 from datetime import datetime
-
+from reportlab.lib.units import inch
 
 def generate_report(
         dashboard,
@@ -17,34 +18,64 @@ def generate_report(
         violation_folder,
         output_path):
 
-    doc = SimpleDocTemplate(output_path)
+    doc = SimpleDocTemplate(
+        output_path,
+        pagesize=A4
+    )
 
     styles = getSampleStyleSheet()
 
     elements = []
 
     # =====================================
-    # Title
+    # PROJECT TITLE
     # =====================================
 
+    title_style = styles["Title"]
+    title_style.alignment = 1
+
     elements.append(
+
         Paragraph(
-            "<b>PPE Detection Live Monitoring Report</b>",
-            styles["Title"]
+
+            "<font color='darkblue'><b>"
+            "Edge AI for Smart Manufacturing & Construction Sites"
+            "</b></font>",
+
+            title_style
+
         )
+
     )
 
-    elements.append(Spacer(1, 20))
+    title_style = styles["Heading2"]
+    title_style.alignment = 1
+
+    elements.append(Spacer(1, 10))
+
+    elements.append(
+
+        Paragraph(
+
+            "<b>Cloud-Based PPE Detection Monitoring Report</b>",
+
+            title_style
+
+        )
+
+    )
+
+    elements.append(Spacer(1, 15))
 
     # =====================================
-    # Date
+    # REPORT DATE
     # =====================================
 
     elements.append(
 
         Paragraph(
 
-            "Generated : " +
+            "<b>Generated On :</b> " +
 
             datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
 
@@ -54,13 +85,15 @@ def generate_report(
 
     )
 
-    elements.append(Spacer(1,20))
+    elements.append(Spacer(1, 20))
 
     # =====================================
-    # Summary Table
+    # SUMMARY TABLE
     # =====================================
 
-    table_data = [
+    summary_data = [
+
+        ["Parameter", "Value"],
 
         ["Total Detections", dashboard["total"]],
 
@@ -76,39 +109,49 @@ def generate_report(
 
     ]
 
-    table = Table(table_data)
+    summary_table = Table(
 
-    table.setStyle(
+        summary_data,
+
+        colWidths=[220, 120]
+
+    )
+
+    summary_table.setStyle(
 
         TableStyle([
 
-            ("BACKGROUND",(0,0),(-1,0),colors.grey),
+            ("BACKGROUND", (0,0), (-1,0), colors.darkblue),
 
-            ("GRID",(0,0),(-1,-1),1,colors.black),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
 
-            ("BACKGROUND",(0,0),(-1,-1),colors.beige),
+            ("GRID", (0,0), (-1,-1), 1, colors.black),
 
-            ("FONTNAME",(0,0),(-1,-1),"Helvetica"),
+            ("BACKGROUND", (0,1), (-1,-1), colors.beige),
 
-            ("BOTTOMPADDING",(0,0),(-1,-1),8)
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+
+            ("ALIGN", (0,0), (-1,-1), "CENTER"),
+
+            ("BOTTOMPADDING", (0,0), (-1,0), 10),
 
         ])
 
     )
 
-    elements.append(table)
+    elements.append(summary_table)
 
-    elements.append(Spacer(1,20))
+    elements.append(Spacer(1, 25))
 
     # =====================================
-    # Recent Detections
+    # RECENT DETECTIONS TITLE
     # =====================================
 
     elements.append(
 
         Paragraph(
 
-            "<b>Recent Detections</b>",
+            "<b>Recent Detection History</b>",
 
             styles["Heading2"]
 
@@ -116,45 +159,138 @@ def generate_report(
 
     )
 
-    elements.append(Spacer(1,10))
+    elements.append(Spacer(1, 10))
+    # =====================================
+    # HISTORY TABLE
+    # =====================================
 
-    for row in history[:10]:
+    history_table = [[
 
-        text = (
+        "Detection",
 
-            f"ID : {row[0]} | "
+        "Employee ID",
 
-            f"Status : {row[8]} | "
+        "Employee Name",
 
-            f"Persons : {row[3]} | "
+        "Department",
 
-            f"Date : {row[9]}"
+        "Status",
 
-        )
+        "Persons",
 
-        elements.append(
+        "Date"
 
-            Paragraph(
+    ]]
 
-                text,
+    for row in history:
 
-                styles["Normal"]
+        status = row[8]
 
-            )
+        if status == "SAFE":
 
-        )
+            status_text = "<font color='green'><b>SAFE</b></font>"
+
+        else:
+
+            status_text = "<font color='red'><b>UNSAFE</b></font>"
+
+        history_table.append([
+
+            str(row[0]),      # Detection ID
+
+            str(row[10]),     # Employee ID
+
+            str(row[11]),     # Employee Name
+
+            str(row[12]),     # Department
+
+            Paragraph(status_text, styles["BodyText"]),
+
+            str(row[3]),
+
+            str(row[9])
+
+        ])
+
+    history_pdf = Table(
+
+        history_table,
+
+        colWidths=[55,70,110,85,60,45,110]
+
+    )
+
+    history_pdf.setStyle(
+
+        TableStyle([
+
+            ("BACKGROUND",(0,0),(-1,0),colors.darkblue),
+
+            ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+
+            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+
+            ("GRID",(0,0),(-1,-1),1,colors.black),
+
+            ("BACKGROUND",(0,1),(-1,-1),colors.whitesmoke),
+
+            ("ALIGN",(0,0),(-1,-1),"CENTER"),
+
+            ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+
+            ("FONTSIZE",(0,0),(-1,-1),8),
+
+            ("BOTTOMPADDING",(0,0),(-1,0),8)
+
+        ])
+
+    )
+
+    elements.append(history_pdf)
 
     elements.append(Spacer(1,20))
 
     # =====================================
-    # Footer
+    # FOOTER
     # =====================================
+
+    elements.append(Spacer(1, 20))
 
     elements.append(
 
         Paragraph(
 
-            "Generated by PPE Detection Live Monitoring System",
+            "<font color='darkblue'><b>"
+            "Generated by Edge AI for Smart Manufacturing & Construction Sites"
+            "</b></font>",
+
+            styles["Heading3"]
+
+        )
+
+    )
+
+    elements.append(Spacer(1, 8))
+
+    elements.append(
+
+        Paragraph(
+
+            "This report was automatically generated by the PPE Detection Monitoring System.",
+
+            styles["Normal"]
+
+        )
+
+    )
+
+    elements.append(Spacer(1, 5))
+
+    elements.append(
+
+        Paragraph(
+
+            "This report is genareted from Higher Othority",
 
             styles["Italic"]
 
@@ -162,4 +298,30 @@ def generate_report(
 
     )
 
-    doc.build(elements)
+    # =====================================
+    # BUILD PDF
+    # =====================================
+
+    doc.build(
+
+        elements,
+
+        onFirstPage=add_page_number,
+
+        onLaterPages=add_page_number
+    )
+def add_page_number(canvas, doc):
+
+        page_num = canvas.getPageNumber()
+
+        canvas.setFont("Helvetica", 9)
+
+        canvas.drawRightString(
+
+            7.7 * inch,
+
+            0.5 * inch,
+
+            f"Page {page_num}"
+
+        )

@@ -46,10 +46,14 @@ def create_database():
 
             status TEXT,
 
-            datetime TEXT
+            datetime TEXT,
 
+            employee_id TEXT,
+
+            employee_name TEXT,
+
+            department TEXT
         )
-
     """)
 
     # ==========================================
@@ -58,18 +62,34 @@ def create_database():
 
     cursor.execute("""
 
-    CREATE TABLE IF NOT EXISTS settings(
+        CREATE TABLE IF NOT EXISTS settings(
 
-      id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
 
-      alert_email TEXT,
+        alert_email TEXT,
 
-      admin_username TEXT,
+        admin_username TEXT,
 
-      admin_password TEXT
+        admin_password TEXT
 
-    )
+        )
 
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS employees (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            employee_id TEXT UNIQUE,
+
+            employee_name TEXT,
+
+            department TEXT,
+
+            image_name TEXT
+
+        )
     """)
 
     # ==========================================
@@ -115,7 +135,11 @@ def save_detection(
     no_hardhat,
     vest,
     no_vest,
-    status
+    status,
+
+    employee_id="NA",
+    employee_name="Unidentified Worker",
+    department="NA"
 
 ):
 
@@ -126,7 +150,6 @@ def save_detection(
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     cursor.execute("""
-
         INSERT INTO detections(
 
             image,
@@ -137,11 +160,14 @@ def save_detection(
             vest,
             no_vest,
             status,
-            datetime
+            datetime,
+            employee_id,
+            employee_name,
+            department
 
         )
 
-        VALUES(?,?,?,?,?,?,?,?,?)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
 
     """, (
 
@@ -153,7 +179,10 @@ def save_detection(
         vest,
         no_vest,
         status,
-        current_time
+        current_time,
+        employee_id,
+        employee_name,
+        department
 
     ))
 
@@ -173,7 +202,21 @@ def get_all_detections():
 
     cursor.execute("""
 
-        SELECT *
+        SELECT
+
+            id,
+            image,
+            result,
+            persons,
+            hardhat,
+            no_hardhat,
+            vest,
+            no_vest,
+            status,
+            datetime,
+            employee_id,
+            employee_name,
+            department
 
         FROM detections
 
@@ -466,3 +509,140 @@ def update_admin_credentials(username, password):
     connection.commit()
 
     connection.close()
+
+def add_employee(employee_id, employee_name, department, image_name):
+
+    conn = sqlite3.connect(DATABASE_NAME)
+
+    cursor = conn.cursor()
+
+    # Check if Employee ID already exists
+    cursor.execute(
+        "SELECT employee_id FROM employees WHERE employee_id=?",
+        (employee_id,)
+    )
+
+    if cursor.fetchone() is not None:
+
+        conn.close()
+
+        return False
+
+    cursor.execute("""
+
+        INSERT INTO employees
+
+        (employee_id, employee_name, department, image_name)
+
+        VALUES (?, ?, ?, ?)
+
+    """, (
+
+        employee_id,
+
+        employee_name,
+
+        department,
+
+        image_name
+
+    ))
+
+    conn.commit()
+
+    conn.close()
+
+    return True
+
+def get_all_employees():
+
+    conn = sqlite3.connect(DATABASE_NAME)
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+
+        SELECT *
+
+        FROM employees
+
+    """)
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
+def get_employee_details(employee_id):
+
+    conn = sqlite3.connect(DATABASE_NAME)
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+
+        SELECT employee_id,
+               employee_name,
+               department
+
+        FROM employees
+
+        WHERE employee_id = ?
+
+    """, (employee_id,))
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    return row
+
+def delete_employee_db(employee_id):
+
+    conn = sqlite3.connect(DATABASE_NAME)
+
+    cursor = conn.cursor()
+
+    # Get image filename
+    cursor.execute(
+        "SELECT image_name FROM employees WHERE id=?",
+        (employee_id,)
+    )
+
+    row = cursor.fetchone()
+
+    if row:
+
+        image_path = os.path.join("employee_faces", row[0])
+
+        if os.path.exists(image_path):
+
+            os.remove(image_path)
+
+    # Delete employee
+    cursor.execute(
+        "DELETE FROM employees WHERE id=?",
+        (employee_id,)
+    )
+
+    conn.commit()
+
+    conn.close()
+
+def employee_exists(employee_id):
+
+    conn = sqlite3.connect(DATABASE_NAME)
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT 1 FROM employees WHERE employee_id=?",
+        (employee_id,)
+    )
+
+    exists = cursor.fetchone() is not None
+
+    conn.close()
+
+    return exists

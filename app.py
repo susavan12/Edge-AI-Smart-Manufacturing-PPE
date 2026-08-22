@@ -1,3 +1,7 @@
+import os
+
+print("Running app.py from:")
+print(os.path.abspath(__file__))
 # ==========================================
 # IMPORTS
 # ==========================================
@@ -77,9 +81,20 @@ from database import (
 
     delete_detection,
 
-    get_detection_by_id
+    get_detection_by_id,
+
+    add_employee,
+
+    delete_employee_db,
+
+    get_employee_details
 
 )
+from face_recognition import EmployeeRecognizer
+from database import add_employee as save_employee
+from database import get_all_employees
+from flask import send_from_directory
+from database import employee_exists
 
 # ==========================================
 # FLASK APP
@@ -121,6 +136,10 @@ os.makedirs(REPORT_FOLDER, exist_ok=True)
 
 detector = PPEDetector()
 
+print(detector.model.names)
+
+recognizer = EmployeeRecognizer()
+
 # ==========================================
 # GLOBAL VARIABLES
 # ==========================================
@@ -139,15 +158,23 @@ MIN_UNSAFE_FRAMES = 3
 
 MIN_SAFE_FRAMES = 2
 
+# =====================================
+# Face Recognition Memory
+# =====================================
+
+last_employee_name = "Unidentified Worker"
+last_seen_time = 0
+IDENTITY_MEMORY_SECONDS = 3
+
 # ==========================================
 # IMAGE SETTINGS
 # ==========================================
 
 JPEG_QUALITY = 80
 
-FRAME_WIDTH = 960
+FRAME_WIDTH = 1280
 
-FRAME_HEIGHT = 540
+FRAME_HEIGHT = 720
 
 # =====================================
 # ROI (Region Of Interest)
@@ -282,6 +309,96 @@ def admin():
 
     )
 
+# ======================================
+# Employee Management Page
+# ======================================
+
+@app.route("/employee_management")
+def employee_management():
+
+    employees = get_all_employees()
+
+    return render_template(
+
+        "employee_management.html",
+
+        employees=employees
+
+    )
+
+
+# ======================================
+# Add Employee
+# ======================================
+
+@app.route("/add_employee", methods=["POST"])
+def add_employee():
+
+    employee_id = request.form["employee_id"]
+    employee_name = request.form["employee_name"]
+    department = request.form["department"]
+
+    if employee_exists(employee_id):
+
+        return """
+        <h2 style='color:red;'>❌ Employee ID already exists.</h2>
+        <br>
+        <a href="/employee_management">Go Back</a>
+        """
+
+    image = request.files["employee_image"]
+
+    if image.filename == "":
+        return "No image selected."
+
+    os.makedirs("employee_faces", exist_ok=True)
+
+    filename = secure_filename(employee_id + ".jpg")
+
+    image_path = os.path.join("employee_faces", filename)
+
+    image.save(image_path)
+    
+    print("=" * 50)
+    print("Saving image...")
+    print("Path:", image_path)
+    print("Exists after save:", os.path.exists(image_path))
+    print("=" * 50)
+
+    # Save employee information into database
+    success = save_employee(
+        employee_id,
+        employee_name,
+        department,
+        filename
+    )
+
+    if not success:
+
+        return """
+        <h2 style='color:red;'>❌ Employee ID already exists.</h2>
+        <br>
+        <a href="/employee_management">Go Back</a>
+        """
+    # Reload employee database
+
+    recognizer.load_database()
+
+    print("Face database reloaded.")
+
+    print("--------------------------------")
+    print("Employee Saved")
+    print("ID :", employee_id)
+    print("Name :", employee_name)
+    print("Department :", department)
+    print("Image :", image_path)
+    print("--------------------------------")
+
+    return """
+    <h2>Employee Saved Successfully.</h2>
+    <br>
+    <a href="/employee_management">Add Another Employee</a>
+    """
 
 # ==========================================
 # SETTINGS
@@ -497,6 +614,49 @@ def box_iou(boxA, boxB):
 # =====================================
 
 def center_inside(region_box, object_box):
+    def calculate_iou(box1, box2):
+        x1 = max(box1[0], box2[0])
+        y1 = max(box1[1], box2[1])
+        x2 = min(box1[2], box2[2])
+        y2 = min(box1[3], box2[3])
+
+        inter = max(0, x2 - x1) * max(0, y2 - y1)
+
+        area1 = (box1[2] - box1[0]) * (box1[3] - box1[1])
+        area2 = (box2[2] - box2[0]) * (box2[3] - box2[1])
+
+        union = area1 + area2 - inter
+
+        if union == 0:
+            return 0
+
+        return inter / union
+
+
+    def is_duplicate_person(new_box, person_boxes, threshold=0.65):
+
+        for person in person_boxes:
+
+            old_box = person["box"]
+
+            if calculate_iou(new_box, old_box) > threshold:
+                return True
+
+        return False
+
+
+    def center_inside(region_box, object_box):
+
+        rx1, ry1, rx2, ry2 = region_box
+        ox1, oy1, ox2, oy2 = object_box
+
+        center_x = (ox1 + ox2) / 2
+        center_y = (oy1 + oy2) / 2
+
+        return (
+            rx1 <= center_x <= rx2 and
+            ry1 <= center_y <= ry2
+        )
 
     rx1, ry1, rx2, ry2 = region_box
     ox1, oy1, ox2, oy2 = object_box
@@ -520,6 +680,9 @@ def detect():
     global last_save_time
     global unsafe_counter
     global safe_counter
+
+    global last_employee_name
+    global last_seen_time
 
     # =====================================
     # Receive Image
@@ -562,6 +725,18 @@ def detect():
 
     results = detector.detect(frame)
 
+    print("=================================")
+    print("Total boxes:", len(results[0].boxes))
+
+    for box in results[0].boxes:
+
+        cls = int(box.cls[0])
+        conf = float(box.conf[0])
+
+        print(results[0].names[cls], conf)
+
+    print("=================================")
+
     result = results[0]
 
     print("\n========== YOLO DETECTIONS ==========")
@@ -574,8 +749,6 @@ def detect():
         print(result.names[cls], round(conf, 2))
 
     print("=====================================\n")
-
-    output = result.plot()
 
     names = result.names
 
@@ -595,12 +768,16 @@ def detect():
     workers_without_helmet = 0
     workers_without_vest = 0
 
+    voice_messages = []
+
     # =====================================
     # Bounding Box Lists
     # =====================================
 
     person_boxes = []
+
     helmet_boxes = []
+
     vest_boxes = []
 
     # =====================================
@@ -610,58 +787,124 @@ def detect():
     for box in boxes:
 
         conf = float(box.conf[0])
-
         cls = int(box.cls[0])
 
         label = names[cls]
 
         x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-        w = x2 - x1
-        h = y2 - y1
+        frame_h, frame_w = frame.shape[:2]
 
-        if w < 20 or h < 20:
+        width = x2 - x1
+        height = y2 - y1
+
+        min_width = int(frame_w * 0.04)
+        min_height = int(frame_h * 0.12)
+
+        if width < min_width or height < min_height:
             continue
 
-        # ------------------------------
-        # ROI only for Person
-        # ------------------------------
+        employee_name = "Unknown"
+
+        # -----------------------------
+        # Face Recognition
+        # -----------------------------
 
         if label == "Person":
 
-            center_x = (x1 + x2) // 2
-            center_y = (y1 + y2) // 2
+            head_y2 = y1 + int((y2 - y1) * 0.45)
 
-            inside_roi = (
+            face_crop = frame[y1:head_y2, x1:x2]
 
-                ROI_X1 <= center_x <= ROI_X2 and
-                ROI_Y1 <= center_y <= ROI_Y2
+            # Check that the crop is valid
+            if face_crop.size != 0:
 
-            )
+                cv2.imshow("Face Crop", face_crop)
+                cv2.waitKey(1)
 
-            if not inside_roi:
-                continue
+                try:
 
-        # ------------------------------
-        # Store detections
-        # ------------------------------
+                    employee_name = recognizer.recognize(face_crop)
 
-        if label == "Person" and conf >= 0.45:
+                    if employee_name is None:
+                        employee_name = "Unknown"
+
+                except Exception as e:
+
+                    print("Recognition Error:", e)
+                    employee_name = "Unknown"
+
+                # ------------------------------------
+                # Identity Memory
+                # ------------------------------------
+
+                if employee_name not in ["Unknown", "Unidentified Worker"]:
+
+                    last_employee_name = employee_name
+                    last_seen_time = time.time()
+
+                else:
+
+                    if time.time() - last_seen_time < IDENTITY_MEMORY_SECONDS:
+
+                        employee_name = last_employee_name
+
+                    else:
+
+                        employee_name = "Unidentified Worker"
+
+                print("Recognized:", employee_name)
+
+        # -----------------------------
+        # ROI Filtering
+        # -----------------------------
+
+        # if label == "Person":
+
+        #     center_x = (x1 + x2) // 2
+        #     center_y = (y1 + y2) // 2
+
+        #     inside_roi = (
+        #         ROI_X1 <= center_x <= ROI_X2 and
+        #         ROI_Y1 <= center_y <= ROI_Y2
+        #     )
+
+        #     if not inside_roi:
+        #         continue
+
+        # -----------------------------
+        # Save detections
+        # -----------------------------
+
+        if label == "Person" and conf >= 0.25:
 
             person += 1
 
-            person_boxes.append((x1, y1, x2, y2))
+            person_boxes.append({
+
+                "box": (x1, y1, x2, y2),
+
+                "name": employee_name
+
+            })
+
+            if employee_name not in ["Unknown", "Unidentified Worker"]:
+
+                employee = get_employee_details(employee_name)
+
+                if employee:
+
+                    person_boxes[-1]["employee_id"] = employee[0]
+                    person_boxes[-1]["department"] = employee[2]
 
         elif label == "Hardhat" and conf >= 0.45:
 
             hardhat += 1
-
             helmet_boxes.append((x1, y1, x2, y2))
 
         elif label == "Safety Vest" and conf >= 0.45:
 
             vest += 1
-
             vest_boxes.append((x1, y1, x2, y2))
 
         elif label == "NO-Hardhat" and conf >= 0.55:
@@ -704,10 +947,52 @@ def detect():
         # =====================================
         # PPE Verification
         # =====================================
-        
+
+        employee_ids = []
+        employee_names = []
+        departments = []
+                
         print("Starting PPE verification...")
 
-        for px1, py1, px2, py2 in person_boxes:
+        for person_data in person_boxes:
+
+            px1, py1, px2, py2 = person_data["box"]
+
+            employee_name = person_data["name"]
+
+            print("Checking PPE for:", employee_name)
+
+            # ------------------------------------------
+            # Get Employee Details
+            # ------------------------------------------
+
+            if employee_name not in ["Unknown", "Unidentified Worker"]:
+
+                employee = get_employee_details(employee_name)
+
+                if employee:
+
+                    employee_id = employee[0]
+                    employee_name_db = employee[1]
+                    department = employee[2]
+
+                else:
+
+                    employee_id = "NA"
+                    employee_name_db = employee_name
+                    department = "NA"
+
+            else:
+
+                employee_id = "NA"
+                employee_name_db = "Unidentified Worker"
+                department = "NA"
+
+            employee_ids.append(employee_id)
+
+            employee_names.append(employee_name_db)
+
+            departments.append(department)
 
             helmet_found = False
             vest_found = False
@@ -717,24 +1002,15 @@ def detect():
             # ------------------------------
 
             head_box = (
-
                 px1,
                 py1,
                 px2,
                 py1 + int((py2 - py1) * 0.35)
-
             )
 
             for hx1, hy1, hx2, hy2 in helmet_boxes:
 
-                if center_inside(
-
-                    head_box,
-
-                    (hx1, hy1, hx2, hy2)
-
-                ):
-
+                if center_inside(head_box, (hx1, hy1, hx2, hy2)):
                     helmet_found = True
                     break
 
@@ -743,47 +1019,73 @@ def detect():
             # ------------------------------
 
             body_box = (
-
                 px1,
                 py1 + int((py2 - py1) * 0.25),
-
                 px2,
-
                 py1 + int((py2 - py1) * 0.85)
-
             )
 
             for vx1, vy1, vx2, vy2 in vest_boxes:
 
-                if center_inside(
-
-                    body_box,
-
-                    (vx1, vy1, vx2, vy2)
-
-                ):
-
+                if center_inside(body_box, (vx1, vy1, vx2, vy2)):
                     vest_found = True
                     break
 
-            print(
-                "Helmet:",
-                helmet_found,
-                "Vest:",
-                vest_found
-            )
+            print("Helmet:", helmet_found, "Vest:", vest_found)
 
             if not helmet_found:
-
                 workers_without_helmet += 1
 
             if not vest_found:
-
                 workers_without_vest += 1
 
             if (not helmet_found) or (not vest_found):
-
                 unsafe_person += 1
+
+            # ------------------------------
+            # Voice Messages
+            # ------------------------------
+
+            if not helmet_found and not vest_found:
+
+                if employee_name != "Unidentified Worker":
+                    voice_messages.append(
+                        f"{employee_name} is not wearing helmet and safety vest."
+                    )
+
+                else:
+
+                    voice_messages.append(
+                        "An unidentified worker is not wearing helmet and safety vest."
+                    )
+
+            elif not helmet_found:
+
+                if employee_name != "Unidentified Worker":
+
+                    voice_messages.append(
+                        f"{employee_name} is not wearing helmet."
+                    )
+
+                else:
+
+                    voice_messages.append(
+                        "An unidentified worker is not wearing helmet."
+                    )
+
+            elif not vest_found:
+
+                if employee_name != "Unidentified Worker":
+
+                    voice_messages.append(
+                        f"{employee_name} is not wearing safety vest."
+                    )
+
+                else:
+
+                    voice_messages.append(
+                        "An unidentified worker is not wearing safety vest."
+                    )
 
         print("unsafe_person =", unsafe_person)
         print("workers_without_helmet =", workers_without_helmet)
@@ -791,6 +1093,13 @@ def detect():
 
         current_status = "SAFE" if unsafe_person == 0 else "UNSAFE"
         print("Current Status =", current_status)
+
+        print("Before temporal filter")
+        print("person =", person)
+        print("current_status =", current_status)
+        print("last_status =", last_status)
+        print("unsafe_counter =", unsafe_counter)
+        print("safe_counter =", safe_counter)
 
         # =====================================
         # Temporal Filtering
@@ -804,7 +1113,7 @@ def detect():
             if unsafe_counter >= MIN_UNSAFE_FRAMES:
                 status = "UNSAFE"
             else:
-                status = last_status
+                status = "UNSAFE"
 
         elif current_status == "SAFE":
 
@@ -814,23 +1123,40 @@ def detect():
             if safe_counter >= MIN_SAFE_FRAMES:
                 status = "SAFE"
             else:
-                status = last_status
+                status = "SAFE"
 
         else:
 
             status = "NO PERSON"
+
             unsafe_counter = 0
             safe_counter = 0
-
-        last_status = status
-
-        print("Final Status =", status)
 
     # =====================================
     # Draw Detection
     # =====================================
 
     output = result.plot()
+
+    # =====================================
+    # Draw Employee Names
+    # =====================================
+
+    for person_data in person_boxes:
+
+        px1, py1, px2, py2 = person_data["box"]
+
+        employee_name = person_data["name"]
+
+        cv2.putText(
+            output,
+            employee_name,
+            (px1, py1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (0, 255, 0),
+            2
+        )
 
     # =====================================
     # Draw ROI
@@ -978,11 +1304,13 @@ def detect():
         (0, 0, 255),
         2
     )
+
     # =====================================
     # Save Violations
     # =====================================
 
     current_time = time.time()
+
     save_event = False
 
     if status == "UNSAFE" and person > 0:
@@ -1011,31 +1339,35 @@ def detect():
             output
         )
 
+        print("Employee IDs:", employee_ids)
+        print("Employee Names:", employee_names)
+        print("Departments:", departments)
+
         save_detection(
+
             image=filename,
+
             result=filename,
+
             persons=person,
+
             hardhat=hardhat,
+
             no_hardhat=workers_without_helmet,
+
             vest=vest,
+
             no_vest=workers_without_vest,
-            status=status
+
+            status=status,
+
+            employee_id=", ".join(employee_ids),
+
+            employee_name=", ".join(employee_names),
+
+            department=", ".join(departments)
+
         )
-
-        try:
-
-            send_violation_email(
-                image_path=violation_path,
-                persons=person,
-                no_hardhat=workers_without_helmet,
-                no_vest=workers_without_vest
-            )
-
-            print("✓ Email Sent")
-
-        except Exception as e:
-
-            print("Email Error :", e)
 
         last_save_time = current_time
 
@@ -1076,27 +1408,40 @@ def detect():
         f"NoVest={workers_without_vest}"
     )
 
+
+    # =====================================
+    # Build Voice Message
+    # =====================================
+
+    if len(voice_messages) > 0:
+        voice_message = " Warning! ".join(voice_messages)
+        voice_message = "Warning! " + voice_message
+    else:
+        voice_message = ""
+    
     # =====================================
     # Return JSON
     # =====================================
 
     return jsonify({
 
-        "image": "data:image/jpeg;base64," + image_string,
+    "image": "data:image/jpeg;base64," + image_string,
 
-        "status": status,
+    "status": status,
 
-        "person": person,
+    "person": person,
 
-        "hardhat": hardhat,
+    "hardhat": hardhat,
 
-        "no_hardhat": workers_without_helmet,
+    "no_hardhat": workers_without_helmet,
 
-        "vest": vest,
+    "vest": vest,
 
-        "no_vest": workers_without_vest,
+    "no_vest": workers_without_vest,
 
-        "violations": violation_count
+    "violations": violation_count,
+
+    "voice": voice_message
 
     })
 # ==========================================
@@ -1109,7 +1454,6 @@ def predict():
     # ----------------------------------
     # Validate Upload
     # ----------------------------------
-
     if "image" not in request.files:
         return "No image uploaded."
 
@@ -1119,116 +1463,131 @@ def predict():
         return "No file selected."
 
     # ----------------------------------
-    # Generate Unique File Name
+    # Save Uploaded Image
     # ----------------------------------
 
     filename = secure_filename(file.filename)
-
     extension = os.path.splitext(filename)[1]
 
     unique_name = f"{uuid.uuid4().hex}{extension}"
 
-    upload_path = os.path.join(
-        UPLOAD_FOLDER,
-        unique_name
-    )
-
-    result_path = os.path.join(
-        RESULT_FOLDER,
-        unique_name
-    )
-
-    # ----------------------------------
-    # Save Uploaded Image
-    # ----------------------------------
+    upload_path = os.path.join(UPLOAD_FOLDER, unique_name)
+    result_path = os.path.join(RESULT_FOLDER, unique_name)
 
     file.save(upload_path)
 
     image = cv2.imread(upload_path)
 
     if image is None:
-     return "Invalid Image"
+        return "Invalid Image"
 
     image = cv2.resize(
-
         image,
-
         (FRAME_WIDTH, FRAME_HEIGHT)
-
     )
 
-    # =====================================
-    # YOLO Prediction
-    # =====================================
+    # ----------------------------------
+    # YOLO Detection
+    # ----------------------------------
 
     results = detector.detect(image)
 
     result = results[0]
 
-    annotated = result.plot()
-
-    cv2.imwrite(
-        result_path,
-        annotated
-    )
-
     names = result.names
     boxes = result.boxes
 
-    # =====================================
-    # Debug
-    # =====================================
-
-    print("====================================")
-    print("Total detections :", len(boxes))
-
-    # =====================================
-    # Counters
-    # =====================================
-
     person = 0
     hardhat = 0
-    no_hardhat = 0
     vest = 0
+    no_hardhat = 0
     no_vest = 0
-
-    # =====================================
-    # Bounding Box Lists
-    # =====================================
 
     person_boxes = []
     helmet_boxes = []
     vest_boxes = []
 
-    # =====================================
-    # Read Detections
-    # =====================================
+    print("=================================")
+    print("Total Detections :", len(boxes))
+
+    # ----------------------------------
+    # Read Detection
+    # ----------------------------------
 
     for box in boxes:
 
         confidence = float(box.conf[0])
         cls = int(box.cls[0])
+
         label = names[cls]
 
         x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-        width = x2 - x1
-        height = y2 - y1
-
-        # Ignore tiny detections
-        if width < 25 or height < 25:
+        if (x2 - x1) < 25 or (y2 - y1) < 25:
             continue
 
-        print(
-            f"{label} | Conf={confidence:.2f} | Box=({x1},{y1},{x2},{y2})"
-        )
+        employee_name = "Unknown"
 
+        # --------------------------
+        # Face Recognition
+        # --------------------------
         if label == "Person":
+
+            head_y2 = y1 + int((y2 - y1) * 0.50)
+
+            face_crop = image[y1:head_y2, x1:x2]
+
+            employee_name = "Unknown"
+
+            if face_crop.size != 0:
+
+                try:
+
+                    employee_name = recognizer.recognize(face_crop)
+
+                    if employee_name is None:
+                        employee_name = "Unknown"
+
+                except Exception as e:
+
+                    print("Recognition Error:", e)
+                    employee_name = "Unknown"
+
+            # -----------------------------
+            # Identity Memory
+            # -----------------------------
+
+            if employee_name != "Unknown":
+
+                last_employee_name = employee_name
+                last_seen_time = time.time()
+
+            else:
+
+                if time.time() - last_seen_time < IDENTITY_MEMORY_SECONDS:
+
+                    employee_name = last_employee_name
+
+                else:
+
+                    employee_name = "Unidentified Worker"
+
+            print("Recognized:", employee_name)
 
             if confidence >= 0.25:
 
                 person += 1
-                person_boxes.append((x1, y1, x2, y2))
+
+                person_boxes.append({
+
+                    "box": (x1, y1, x2, y2),
+
+                    "name": employee_name,
+
+                    "employee_id": "NA",
+
+                    "department": "NA"
+                })
 
         elif label == "Hardhat":
 
@@ -1247,7 +1606,7 @@ def predict():
         elif label == "NO-Hardhat":
 
             if confidence >= 0.45:
-
+    
                 no_hardhat += 1
 
         elif label == "NO-Safety Vest":
@@ -1256,20 +1615,39 @@ def predict():
 
                 no_vest += 1
 
-    print("------------------------------------")
-    print("Persons :", person)
-    print("Helmet  :", hardhat)
-    print("Vest    :", vest)
-    print("NoHelmet:", no_hardhat)
-    print("NoVest  :", no_vest)
-    print("------------------------------------")
+    # ----------------------------------
+    # Draw Detection
+    # ----------------------------------
 
-    print("Person Boxes:", len(person_boxes))
-    print("Helmet Boxes:", len(helmet_boxes))
-    print("Vest Boxes:", len(vest_boxes))
-    # =====================================
-    # Decide Status
-    # =====================================
+    annotated = result.plot()
+
+    for person_data in person_boxes:
+
+        px1, py1, px2, py2 = person_data["box"]
+
+        cv2.putText(
+
+            annotated,
+
+            person_data["name"],
+
+            (px1, py1 - 10),
+
+            cv2.FONT_HERSHEY_SIMPLEX,
+
+            0.7,
+
+            (0,255,0),
+
+            2
+
+        )
+
+    cv2.imwrite(result_path, annotated)
+
+    # ----------------------------------
+    # Status
+    # ----------------------------------
 
     if person == 0:
 
@@ -1282,46 +1660,50 @@ def predict():
     else:
 
         status = "SAFE"
-    # ======================================
-    # Save Detection to Database
-    # ======================================
 
-    # =====================================
+    # ----------------------------------
     # Save Detection
-    # =====================================
+    # ----------------------------------
 
     save_detection(
 
-    image=unique_name,
-    result=unique_name,
-    persons=person,
-    hardhat=hardhat,
-    no_hardhat=no_hardhat,
-    vest=vest,
-    no_vest=no_vest,
-    status=status
+        image=unique_name,
 
-   )
+        result=unique_name,
+
+        persons=person,
+
+        hardhat=hardhat,
+
+        no_hardhat=no_hardhat,
+
+        vest=vest,
+
+        no_vest=no_vest,
+
+        status=status
+
+    )
 
     return render_template(
 
-    "result.html",
+        "result.html",
 
-    original_image="/" + upload_path,
+        original_image="/" + upload_path,
 
-    detected_image="/" + result_path,
+        detected_image="/" + result_path,
 
-    person=person,
+        person=person,
 
-    hardhat=hardhat,
+        hardhat=hardhat,
 
-    no_hardhat=no_hardhat,
+        no_hardhat=no_hardhat,
 
-    vest=vest,
+        vest=vest,
 
-    no_vest=no_vest,
+        no_vest=no_vest,
 
-    status=status
+        status=status
 
     )
 
@@ -1400,28 +1782,58 @@ def export_excel():
 
     # Header
     sheet.append([
-        "ID",
+
+        "Detection ID",
+
+        "Employee ID",
+
+        "Employee Name",
+
+        "Department",
+
         "Status",
+
         "Persons",
+
         "Hardhat",
+
         "No Hardhat",
+
         "Vest",
+
         "No Vest",
+
         "Date"
+
     ])
 
-    # Data
+    print("First Detection Row:")
+    print(detections[0])
+
     for row in detections:
 
         sheet.append([
 
-            row[0],   # ID
+            row[0],   # Detection ID
+
+            row[10],  # Employee ID
+
+            row[11],  # Employee Name
+
+            row[12],  # Department
+
             row[8],   # Status
+
             row[3],   # Persons
+
             row[4],   # Hardhat
+
             row[5],   # No Hardhat
+
             row[6],   # Vest
+
             row[7],   # No Vest
+
             row[9]    # Date
 
         ])
@@ -1445,7 +1857,7 @@ def export_excel():
 
 @app.route("/clear_data")
 def clear_data():
-    
+
     # -----------------------------
     # Admin Login Required
     # -----------------------------
@@ -1456,45 +1868,65 @@ def clear_data():
     import sqlite3
     import os
 
-    # -----------------------------
+    # ==========================================
     # Delete Result Images
-    # -----------------------------
+    # ==========================================
+
     for file in glob.glob(os.path.join(RESULT_FOLDER, "*")):
 
         try:
-            os.remove(file)
-        except:
-            pass
+            if os.path.isfile(file):
+                os.remove(file)
+        except Exception as e:
+            print("Error deleting result file:", e)
 
-    # -----------------------------
+    # ==========================================
     # Delete Violation Images
-    # -----------------------------
+    # ==========================================
+
     for file in glob.glob(os.path.join(VIOLATION_FOLDER, "*")):
 
         try:
-            os.remove(file)
-        except:
-            pass
+            if os.path.isfile(file):
+                os.remove(file)
+        except Exception as e:
+            print("Error deleting violation file:", e)
 
-    # -----------------------------
+    # ==========================================
+    # Delete Uploaded Images
+    # ==========================================
+
+    for file in glob.glob(os.path.join(UPLOAD_FOLDER, "*")):
+
+        try:
+            if os.path.isfile(file):
+                os.remove(file)
+        except Exception as e:
+            print("Error deleting uploaded file:", e)
+
+    # ==========================================
     # Delete Generated Reports
-    # -----------------------------
+    # ==========================================
+
     for file in glob.glob(os.path.join(REPORT_FOLDER, "*")):
 
         try:
-            os.remove(file)
-        except:
-            pass
+            if os.path.isfile(file):
+                os.remove(file)
+        except Exception as e:
+            print("Error deleting report file:", e)
 
-    # -----------------------------
-    # Clear Database
-    # -----------------------------
+    # ==========================================
+    # Clear Detection Database
+    # ==========================================
+
     connection = sqlite3.connect(DATABASE_NAME)
 
     cursor = connection.cursor()
 
     cursor.execute("DELETE FROM detections")
 
+    # Reset Detection ID numbering
     cursor.execute(
         "DELETE FROM sqlite_sequence WHERE name='detections'"
     )
@@ -1503,11 +1935,11 @@ def clear_data():
 
     connection.close()
 
-    # -----------------------------
+    # ==========================================
     # Return to Admin Panel
-    # -----------------------------
-    return redirect(url_for("admin"))
+    # ==========================================
 
+    return redirect(url_for("admin"))
 # ==========================================
 # Logout
 # ==========================================
@@ -1519,6 +1951,36 @@ def logout():
 
     return redirect("/")
 
+@app.route("/employee_registration")
+def employee_registration():
+
+    return render_template(
+
+        "employee_registration.html"
+
+    )
+
+@app.route("/delete_employee/<int:employee_id>")
+def delete_employee(employee_id):
+
+    delete_employee_db(employee_id)
+
+    recognizer.load_database()
+
+    return redirect(url_for("employee_management"))
+
+@app.route("/employee_faces/<path:filename>")
+def employee_face(filename):
+
+    import os
+
+    folder = os.path.abspath("employee_faces")
+    file_path = os.path.join(folder, filename)
+
+    print("Serving:", file_path)
+    print("Exists:", os.path.exists(file_path))
+
+    return send_from_directory(folder, filename)
 # ==========================================
 # Run Flask Application
 # ==========================================

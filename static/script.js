@@ -23,6 +23,8 @@ const startBtn = document.getElementById("startBtn");
 
 const stopBtn = document.getElementById("stopBtn");
 
+let lastVoiceTime = 0;
+
 // ======================================
 // Variables
 // ======================================
@@ -33,6 +35,7 @@ let violationInterval = null;
 let cameraStarted = false;
 let isProcessing = false;
 let alarmRunning = false;
+let voiceRunning = false;
 
 // ======================================
 // Start Camera
@@ -87,6 +90,32 @@ async function startCamera() {
         alert(error.message);
 
     }
+
+}
+
+function speakWarning(message) {
+
+    if (!message) return;
+
+    if (voiceRunning) return;
+
+    voiceRunning = true;
+
+    speechSynthesis.cancel();
+
+    const speech = new SpeechSynthesisUtterance(message);
+
+    speech.rate = 1;
+    speech.pitch = 1;
+    speech.volume = 1;
+
+    speech.onend = function () {
+
+        voiceRunning = false;
+
+    };
+
+    speechSynthesis.speak(speech);
 
 }
 
@@ -146,6 +175,7 @@ async function sendFrame() {
         }
 
         const data = await response.json();
+        console.log("Voice message:", data.voice);
 
         if (!cameraStarted) return;
 
@@ -199,7 +229,26 @@ async function sendFrame() {
 
                     console.log("Alarm:", err);
 
+                    alarmRunning = false;
+
                 });
+
+                // Wait until alarm finishes
+                alarm.onended = function () {
+
+                console.log("Alarm finished");
+
+                alarmRunning = false;
+
+                if (data.voice) {
+
+                    console.log("Speaking:", data.voice);
+
+                    speakWarning(data.voice);
+
+                }
+
+                };
 
             }
 
@@ -214,10 +263,11 @@ async function sendFrame() {
             if (alarmRunning) {
 
                 alarm.pause();
-
                 alarm.currentTime = 0;
-
                 alarmRunning = false;
+
+                speechSynthesis.cancel();
+                voiceRunning = false;
 
             }
 
@@ -234,10 +284,11 @@ async function sendFrame() {
             if (alarmRunning) {
 
                 alarm.pause();
-
                 alarm.currentTime = 0;
-
                 alarmRunning = false;
+
+                speechSynthesis.cancel();
+                voiceRunning = false;
 
             }
 
@@ -285,7 +336,8 @@ function stopCamera() {
 
         alarm.pause();
         alarm.currentTime = 0;
-
+        speechSynthesis.cancel();
+        voiceRunning = false;
     }
 
     alarmRunning = false;

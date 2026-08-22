@@ -310,7 +310,7 @@ width:100%;
             type="text"
             id="searchInput"
             class="search-box"
-            placeholder="🔍 Search by SAFE, UNSAFE or Date">
+            placeholder="🔍Search by Employee ID, Department, SAFE, UNSAFE or Date">
 
         <div class="button-group">
 
@@ -331,8 +331,8 @@ width:100%;
     </div>
 
     <!-- ===========================
-         Table
-    ============================ -->
+            Table
+    =========================== -->
 
     <div class="table-card">
 
@@ -356,6 +356,12 @@ width:100%;
 
                 <th>Status</th>
 
+                <th>Employee ID</th>
+
+                <th>Employee Name</th>
+
+                <th>Department</th>
+
                 <th>Date</th>
 
                 <th>Delete</th>
@@ -366,6 +372,7 @@ width:100%;
 
             <tr>
 
+                <!-- Detection ID -->
                 <td>
 
                     <a
@@ -378,65 +385,79 @@ width:100%;
 
                 </td>
 
+                <!-- Image -->
                 <td>
 
                     {% if row[2].startswith("violation_") %}
 
                         <img
-                            src="{{ url_for('static', filename='violations/' + row[2]) }}"
-                            width="120"
-                            style="border-radius:10px;">
+                        src="{{ url_for('static', filename='violations/' + row[2]) }}"
+                        width="120"
+                        style="border-radius:10px;">
 
                     {% else %}
 
                         <img
-                            src="{{ url_for('static', filename='results/' + row[2]) }}"
-                            width="120"
-                            style="border-radius:10px;">
+                        src="{{ url_for('static', filename='results/' + row[2]) }}"
+                        width="120"
+                        style="border-radius:10px;">
 
                     {% endif %}
 
-
                 </td>
 
+                <!-- Persons -->
                 <td>{{ row[3] }}</td>
 
+                <!-- Hardhat -->
                 <td>{{ row[4] }}</td>
 
+                <!-- No Hardhat -->
                 <td>{{ row[5] }}</td>
 
+                <!-- Vest -->
                 <td>{{ row[6] }}</td>
 
+                <!-- No Vest -->
                 <td>{{ row[7] }}</td>
 
+                <!-- Status -->
                 <td data-status="{{ row[8] }}">
 
-                {% if row[8]=="SAFE" %}
+                    {% if row[8] == "SAFE" %}
 
-                <span class="safe">
-                🟢 SAFE
-                </span>
+                        <span class="safe">🟢 SAFE</span>
 
-                {% else %}
+                    {% elif row[8] == "UNSAFE" %}
 
-                <span class="unsafe">
-                🔴 UNSAFE
-                </span>
+                        <span class="unsafe">🔴 UNSAFE</span>
 
-                {% endif %}
+                    {% else %}
+
+                        {{ row[8] }}
+
+                    {% endif %}
 
                 </td>
 
+                <!-- Employee ID -->
+                <td>{{ row[10] }}</td>
+
+                <!-- Employee Name -->
+                <td>{{ row[11] }}</td>
+
+                <!-- Department -->
+                <td>{{ row[12] }}</td>
+
+                <!-- Date -->
                 <td>{{ row[9] }}</td>
 
+                <!-- Delete -->
                 <td>
 
                     <a
-
                     href="/delete/{{ row[0] }}"
-
                     class="delete"
-
                     onclick="return confirm('Delete this detection?');">
 
                     Delete
@@ -454,40 +475,52 @@ width:100%;
     </div>
 
   </div>
+
+  </div>
  
     <script>
 
         const searchInput = document.getElementById("searchInput");
 
-        searchInput.addEventListener("input", function () {
+        searchInput.addEventListener("keyup", function () {
 
-            const search = this.value.trim().toLowerCase();
+            const value = this.value.toLowerCase().trim();
 
-            const rows = document.querySelectorAll(".table-card table tr");
+            const rows = document.querySelectorAll("table tr");
 
             rows.forEach((row, index) => {
 
-                if(index === 0) return;
+                if (index === 0) return; // Skip header
 
-                const status = row.cells[7].dataset.status.toLowerCase();
-                const date = row.cells[8].innerText.toLowerCase();
+                const employeeId = row.cells[8].innerText.toLowerCase();
 
-                let show = false;
+                const department = row.cells[10].innerText.toLowerCase();
 
-                if(search === ""){
-                    show = true;
-                }
-                else if(search === "safe"){
-                    show = status === "safe";
-                }
-                else if(search === "unsafe"){
-                    show = status === "unsafe";
-                }
-                else if(date.includes(search)){
-                    show = true;
+                const status = row.cells[7].innerText.toLowerCase();
+
+                const date = row.cells[11].innerText.toLowerCase();
+
+                if (
+
+                    employeeId.includes(value) ||
+
+                    department.includes(value) ||
+
+                    status.includes(value) ||
+
+                    date.includes(value)
+
+                ) {
+
+                    row.style.display = "";
+
                 }
 
-                row.style.display = show ? "" : "none";
+                else {
+
+                    row.style.display = "none";
+
+                }
 
             });
 
