@@ -852,7 +852,7 @@ def detect():
 
                 else:
 
-                    if time.time() - last_seen_time < IDENTITY_MEMORY_SECONDS:
+                    if last_seen_time and time.time() - last_seen_time < IDENTITY_MEMORY_SECONDS:
 
                         employee_name = last_employee_name
 
@@ -1460,6 +1460,7 @@ def detect():
 @app.route("/predict", methods=["POST"])
 def predict():
 
+    global last_employee_name, last_seen_time
     # ----------------------------------
     # Validate Upload
     # ----------------------------------
@@ -1573,7 +1574,7 @@ def predict():
 
             else:
 
-                if time.time() - last_seen_time < IDENTITY_MEMORY_SECONDS:
+                if last_seen_time and time.time() - last_seen_time < IDENTITY_MEMORY_SECONDS:
 
                     employee_name = last_employee_name
 
