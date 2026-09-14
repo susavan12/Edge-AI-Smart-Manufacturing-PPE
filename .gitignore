@@ -21,3 +21,13 @@ static/violations/
 
 # Reports (if generated)
 reports/
+
+# Local YOLO models
+best.pt
+best_v2.pt
+yolov8n.pt
+
+# Local datasets and employee face images
+dataset/
+dataset_filtered/
+employee_faces/
