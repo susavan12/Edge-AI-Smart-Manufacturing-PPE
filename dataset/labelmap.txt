@@ -1,0 +1,10 @@
+{0:'Person',
+1:'Hardhat',
+2:'Safety Vest'
+3:'NO-Hardhat'
+4:'NO-Safety Vest'
+5:'Mask'
+6:'NO-Mask'
+7:'Gloves'
+8:'Excavator'
+9:'Safety Cone'}

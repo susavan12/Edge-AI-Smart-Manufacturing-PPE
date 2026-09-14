@@ -683,6 +683,7 @@ def detect():
 
     global last_employee_name
     global last_seen_time
+    start_time = time.time()
 
     # =====================================
     # Receive Image
@@ -724,7 +725,7 @@ def detect():
     # =====================================
 
     results = detector.detect(frame)
-
+    print("YOLO time:", round(time.time() - start_time, 3), "seconds")
     print("=================================")
     print("Total boxes:", len(results[0].boxes))
 
@@ -798,6 +799,15 @@ def detect():
         width = x2 - x1
         height = y2 - y1
 
+        if label == "Person":
+            print(
+                "PERSON DETECTION:",
+                "conf =", round(conf, 3),
+                "width =", width,
+                "height =", height,
+                "box =", (x1, y1, x2, y2)
+            )
+
         min_width = int(frame_w * 0.04)
         min_height = int(frame_h * 0.12)
 
@@ -818,9 +828,6 @@ def detect():
 
             # Check that the crop is valid
             if face_crop.size != 0:
-
-                cv2.imshow("Face Crop", face_crop)
-                cv2.waitKey(1)
 
                 try:
 
@@ -1377,6 +1384,8 @@ def detect():
 
     last_status = status
 
+    encode_start = time.time()
+
     # =====================================
     # Encode Image
     # =====================================
@@ -1531,7 +1540,7 @@ def predict():
         # --------------------------
         # Face Recognition
         # --------------------------
-        if label == "Person":
+        if label == "Person" and confidence >= 0.25:
 
             head_y2 = y1 + int((y2 - y1) * 0.50)
 
