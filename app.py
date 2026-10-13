@@ -1376,6 +1376,19 @@ def detect():
 
         )
 
+              # Send email alert for the saved PPE violation
+        try:
+            send_violation_email(
+                image_path=violation_path,
+                persons=person,
+                no_hardhat=workers_without_helmet,
+                no_vest=workers_without_vest
+            )
+            print("Email Sent: PPE violation alert submitted successfully.")
+
+        except Exception as e:
+            print("Email Error:", e)
+
         last_save_time = current_time
 
     # =====================================
